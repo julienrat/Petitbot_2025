@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetitBot - Programmation par Blocs</title>
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="main-container">
+        <!-- Conteneur de gauche -->
+        <div class="vertical-container left-panel">
+            <div class="panel-header">Blocs disponibles</div>
+            <div class="panel-content">
+                <!-- Catégories de blocs -->
+                <div class="category-section">
+                    <div class="category-header" data-category="MOVEMENT">
+                        <span class="category-icon">⬆️</span>
+                        <span class="category-title">Déplacements</span>
+                    </div>
+                    <div class="category-blocks" id="MOVEMENT-blocks"></div>
+                </div>
+                <div class="category-section">
+                    <div class="category-header" data-category="CONTROL">
+                        <span class="category-icon">🔄</span>
+                        <span class="category-title">Contrôles</span>
+                    </div>
+                    <div class="category-blocks" id="CONTROL-blocks"></div>
+                </div>
+                <div class="category-section">
+                    <div class="category-header" data-category="SENSOR">
+                        <span class="category-icon">📏</span>
+                        <span class="category-title">Capteurs</span>
+                    </div>
+                    <div class="category-blocks" id="SENSOR-blocks"></div>
+                </div>
+                <div class="category-section">
+                    <div class="category-header" data-category="SERVOS">
+                        <span class="category-icon">🔧</span>
+                        <span class="category-title">Servomoteurs</span>
+                    </div>
+                    <div class="category-blocks" id="SERVOS-blocks"></div>
+                </div>
+                <div class="category-section">
+                    <div class="category-header" data-category="LEDS">
+                        <span class="category-icon">💡</span>
+                        <span class="category-title">LEDs</span>
+                    </div>
+                    <div class="category-blocks" id="LEDS-blocks"></div>
+                </div>
+                <div class="category-section">
+                    <div class="category-header" data-category="TIME">
+                        <span class="category-icon">⏱️</span>
+                        <span class="category-title">Temps</span>
+                    </div>
+                    <div class="category-blocks" id="TIME-blocks"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conteneur de droite -->
+        <div class="vertical-container right-panel">
+            <div class="panel-header">
+                <span>Programme</span>
+                <div class="button-group">
+                    <button id="btn-execute" class="action-button">Exécuter</button>
+                    <button id="btn-clear" class="action-button">Effacer</button>
+                    <button id="btn-toggle-icons" class="action-button icon-mode-button" title="Mode icônes">
+                        <span class="mode-icon">🎨</span>
+                    </button>
+                </div>
+            </div>
+            <div class="panel-content">
+                <div id="program-container"></div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html> 
