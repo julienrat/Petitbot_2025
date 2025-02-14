@@ -172,8 +172,31 @@ let insertIndicator = null;
 let isFromPalette = false;
 let currentLanguage = localStorage.getItem('language') || 'fr';
 
-// Initialisation
+// Gestion des onglets
 document.addEventListener('DOMContentLoaded', () => {
+    const tabs = document.querySelectorAll('.tab-item');
+    const contents = document.querySelectorAll('.tab-content');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Retirer la classe active de tous les onglets
+            tabs.forEach(t => t.classList.remove('active'));
+            // Ajouter la classe active à l'onglet cliqué
+            tab.classList.add('active');
+
+            // Cacher tous les contenus
+            contents.forEach(content => {
+                content.style.display = 'none';
+            });
+
+            // Afficher le contenu correspondant à l'onglet
+            const targetContent = document.getElementById(`${tab.dataset.tab}-content`);
+            if (targetContent) {
+                targetContent.style.display = 'block';
+            }
+        });
+    });
+
     initializeLanguage();
     initializeCategories();
     initializeBlocks();
@@ -190,6 +213,10 @@ document.addEventListener('DOMContentLoaded', () => {
         workspace.classList.add('icons-mode');
         blocksContainer.classList.add('icons-mode');
     }
+
+    // Initialiser la télécommande et la configuration WiFi
+    initializeRemoteControl();
+    initializeWiFiConfig();
 });
 
 // Initialisation de la langue
@@ -895,4 +922,254 @@ function toggleIconsMode() {
     // Sauvegarder la préférence
     const isIconMode = button.classList.contains('active');
     localStorage.setItem('iconMode', isIconMode);
+}
+
+// Gestion de la télécommande
+function initializeRemoteControl() {
+    const BASE_URL = 'http://192.168.4.1';
+    let isPressed = false;
+
+    // Fonction pour envoyer une commande
+    async function sendCommand(command) {
+        try {
+            const response = await fetch(`${BASE_URL}/${command}`);
+            if (!response.ok) {
+                throw new Error(`Erreur HTTP: ${response.status}`);
+            }
+            return await response.text();
+        } catch (error) {
+            console.error('Erreur lors de l\'envoi de la commande:', error);
+        }
+    }
+
+    // Fonction pour mettre à jour les valeurs des capteurs
+    async function updateSensorValues() {
+        try {
+            // Mise à jour de la distance
+            const distanceResponse = await fetch(`${BASE_URL}/distance`);
+            if (distanceResponse.ok) {
+                const distance = await distanceResponse.text();
+                document.getElementById('distance-value').textContent = `${distance} cm`;
+            }
+
+            // Mise à jour de la valeur analogique
+            const analogResponse = await fetch(`${BASE_URL}/analog`);
+            if (analogResponse.ok) {
+                const analog = await analogResponse.text();
+                document.getElementById('analog-value').textContent = analog;
+            }
+        } catch (error) {
+            console.error('Erreur lors de la mise à jour des capteurs:', error);
+        }
+    }
+
+    // Configuration des boutons de contrôle
+    const controls = {
+        'forward': 'avance',
+        'backward': 'recule',
+        'left': 'gauche',
+        'right': 'droite',
+        'stop': 'stop'
+    };
+
+    // Ajout des gestionnaires d'événements pour chaque bouton
+    Object.entries(controls).forEach(([buttonId, command]) => {
+        const button = document.getElementById(buttonId);
+        if (button) {
+            button.addEventListener('mousedown', () => {
+                isPressed = true;
+                sendCommand(command);
+            });
+
+            button.addEventListener('mouseup', () => {
+                isPressed = false;
+                if (command !== 'stop') {
+                    sendCommand('stop');
+                }
+            });
+
+            button.addEventListener('mouseleave', () => {
+                if (isPressed && command !== 'stop') {
+                    isPressed = false;
+                    sendCommand('stop');
+                }
+            });
+
+            // Support tactile
+            button.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                isPressed = true;
+                sendCommand(command);
+            });
+
+            button.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                isPressed = false;
+                if (command !== 'stop') {
+                    sendCommand('stop');
+                }
+            });
+        }
+    });
+
+    // Mise à jour périodique des valeurs des capteurs
+    setInterval(updateSensorValues, 500);
+}
+
+// Gestion de la configuration WiFi
+function initializeWiFiConfig() {
+    const BASE_URL = 'http://192.168.4.1';
+    const modeToggle = document.getElementById('wifi-mode-toggle');
+    const apConfig = document.getElementById('ap-config');
+    const stationConfig = document.getElementById('station-config');
+    const apForm = document.getElementById('ap-form');
+    const stationForm = document.getElementById('station-form');
+    const currentMode = document.getElementById('current-mode');
+    const connectionStatus = document.getElementById('connection-status');
+    const currentIP = document.getElementById('current-ip');
+
+    // Fonction pour mettre à jour l'affichage en fonction du mode
+    function updateDisplay(isAPMode) {
+        apConfig.style.display = isAPMode ? 'block' : 'none';
+        stationConfig.style.display = isAPMode ? 'none' : 'block';
+        currentMode.textContent = isAPMode ? 'Point d\'Accès' : 'Station';
+    }
+
+    // Gestionnaire du toggle switch
+    modeToggle.addEventListener('change', () => {
+        updateDisplay(modeToggle.checked);
+    });
+
+    // Fonction pour valider une adresse IP
+    function isValidIP(ip) {
+        const parts = ip.split('.');
+        return parts.length === 4 && parts.every(part => {
+            const num = parseInt(part);
+            return num >= 0 && num <= 255;
+        });
+    }
+
+    // Gestionnaire du formulaire AP
+    apForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const ssid = document.getElementById('ap-ssid').value;
+        const password = document.getElementById('ap-password').value;
+        const channel = document.getElementById('ap-channel').value;
+
+        if (password.length < 8) {
+            alert('Le mot de passe doit contenir au moins 8 caractères');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${BASE_URL}/setup_ap`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `ssid=${encodeURIComponent(ssid)}&password=${encodeURIComponent(password)}&channel=${channel}`
+            });
+
+            if (response.ok) {
+                alert('Configuration du point d\'accès mise à jour avec succès !');
+                connectionStatus.textContent = 'Connecté';
+                connectionStatus.className = 'connected';
+                currentIP.textContent = '192.168.4.1';
+            } else {
+                throw new Error('Erreur lors de la configuration du point d\'accès');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            alert('Erreur lors de la configuration du point d\'accès');
+            connectionStatus.textContent = 'Erreur';
+            connectionStatus.className = 'disconnected';
+        }
+    });
+
+    // Gestionnaire du formulaire Station
+    stationForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const ssid = document.getElementById('station-ssid').value;
+        const password = document.getElementById('station-password').value;
+        const staticIP = document.getElementById('static-ip').value;
+        const gateway = document.getElementById('gateway').value;
+        const subnet = document.getElementById('subnet').value;
+
+        // Validation des adresses IP
+        if (!isValidIP(staticIP) || !isValidIP(gateway) || !isValidIP(subnet)) {
+            alert('Veuillez vérifier le format des adresses IP');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${BASE_URL}/setup_station`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `ssid=${encodeURIComponent(ssid)}&password=${encodeURIComponent(password)}` +
+                      `&static_ip=${encodeURIComponent(staticIP)}&gateway=${encodeURIComponent(gateway)}` +
+                      `&subnet=${encodeURIComponent(subnet)}`
+            });
+
+            if (response.ok) {
+                alert('Configuration de la station mise à jour avec succès !\nLe PetitBot va redémarrer avec la nouvelle configuration.');
+                connectionStatus.textContent = 'En cours de connexion...';
+                currentIP.textContent = staticIP;
+
+                // Attendre que le PetitBot redémarre et se connecte
+                setTimeout(async () => {
+                    try {
+                        const statusResponse = await fetch(`http://${staticIP}/status`);
+                        if (statusResponse.ok) {
+                            connectionStatus.textContent = 'Connecté';
+                            connectionStatus.className = 'connected';
+                        }
+                    } catch {
+                        connectionStatus.textContent = 'Déconnecté';
+                        connectionStatus.className = 'disconnected';
+                    }
+                }, 30000); // Attendre 30 secondes pour le redémarrage
+            } else {
+                throw new Error('Erreur lors de la configuration de la station');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            alert('Erreur lors de la configuration de la station');
+            connectionStatus.textContent = 'Erreur';
+            connectionStatus.className = 'disconnected';
+        }
+    });
+
+    // Initialisation de l'état
+    updateDisplay(modeToggle.checked);
+
+    // Récupération de l'état actuel du WiFi
+    async function updateWiFiStatus() {
+        try {
+            const response = await fetch(`${BASE_URL}/wifi_status`);
+            if (response.ok) {
+                const status = await response.json();
+                currentMode.textContent = status.mode === 'ap' ? 'Point d\'Accès' : 'Station';
+                connectionStatus.textContent = status.connected ? 'Connecté' : 'Déconnecté';
+                connectionStatus.className = status.connected ? 'connected' : 'disconnected';
+                currentIP.textContent = status.ip;
+                
+                // Mettre à jour le toggle switch sans déclencher l'événement
+                const shouldBeChecked = status.mode === 'ap';
+                if (modeToggle.checked !== shouldBeChecked) {
+                    modeToggle.checked = shouldBeChecked;
+                    updateDisplay(shouldBeChecked);
+                }
+            }
+        } catch (error) {
+            console.error('Erreur lors de la récupération du statut WiFi:', error);
+        }
+    }
+
+    // Mettre à jour le statut toutes les 5 secondes
+    updateWiFiStatus();
+    setInterval(updateWiFiStatus, 5000);
 } 

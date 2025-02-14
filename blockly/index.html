@@ -3,78 +3,323 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PetitBot - Programmation par Blocs</title>
+    <title>PetitBot</title>
     <link href="style.css" rel="stylesheet">
 </head>
 <body>
-    <div class="main-container">
-        <!-- Conteneur de gauche -->
-        <div class="vertical-container left-panel">
-            <div class="panel-header">Blocs disponibles</div>
-            <div class="panel-content">
-                <!-- Catégories de blocs -->
-                <div class="category-section">
-                    <div class="category-header" data-category="MOVEMENT">
-                        <span class="category-icon">⬆️</span>
-                        <span class="category-title">Déplacements</span>
-                    </div>
-                    <div class="category-blocks" id="MOVEMENT-blocks"></div>
-                </div>
-                <div class="category-section">
-                    <div class="category-header" data-category="CONTROL">
-                        <span class="category-icon">🔄</span>
-                        <span class="category-title">Contrôles</span>
-                    </div>
-                    <div class="category-blocks" id="CONTROL-blocks"></div>
-                </div>
-                <div class="category-section">
-                    <div class="category-header" data-category="SENSOR">
-                        <span class="category-icon">📏</span>
-                        <span class="category-title">Capteurs</span>
-                    </div>
-                    <div class="category-blocks" id="SENSOR-blocks"></div>
-                </div>
-                <div class="category-section">
-                    <div class="category-header" data-category="SERVOS">
-                        <span class="category-icon">🔧</span>
-                        <span class="category-title">Servomoteurs</span>
-                    </div>
-                    <div class="category-blocks" id="SERVOS-blocks"></div>
-                </div>
-                <div class="category-section">
-                    <div class="category-header" data-category="LEDS">
-                        <span class="category-icon">💡</span>
-                        <span class="category-title">LEDs</span>
-                    </div>
-                    <div class="category-blocks" id="LEDS-blocks"></div>
-                </div>
-                <div class="category-section">
-                    <div class="category-header" data-category="TIME">
-                        <span class="category-icon">⏱️</span>
-                        <span class="category-title">Temps</span>
-                    </div>
-                    <div class="category-blocks" id="TIME-blocks"></div>
-                </div>
-            </div>
+    <nav class="tabs-navigation">
+        <div class="tab-item active" data-tab="presentation">
+            <span class="tab-icon">📖</span>
+            <span class="tab-text">Présentation du projet</span>
         </div>
+        <div class="tab-item" data-tab="remote">
+            <span class="tab-icon">🎮</span>
+            <span class="tab-text">Télécommande</span>
+        </div>
+        <div class="tab-item" data-tab="blockly">
+            <span class="tab-icon">🧩</span>
+            <span class="tab-text">Programmation bloc</span>
+        </div>
+        <div class="tab-item" data-tab="wifi">
+            <span class="tab-icon">📡</span>
+            <span class="tab-text">Configuration WiFi</span>
+        </div>
+        <div class="tab-item" data-tab="docs">
+            <span class="tab-icon">📚</span>
+            <span class="tab-text">Documentation</span>
+        </div>
+    </nav>
 
-        <!-- Conteneur de droite -->
-        <div class="vertical-container right-panel">
-            <div class="panel-header">
-                <span>Programme</span>
-                <div class="button-group">
-                    <button id="btn-execute" class="action-button">Exécuter</button>
-                    <button id="btn-clear" class="action-button">Effacer</button>
-                    <button id="btn-toggle-icons" class="action-button icon-mode-button" title="Mode icônes">
-                        <span class="mode-icon">🎨</span>
-                    </button>
-                </div>
+    <div class="tab-content" id="presentation-content">
+        <div class="presentation-container">
+            <h1>Bienvenue sur PetitBot</h1>
+            <div class="presentation-section">
+                <h2>Qu'est-ce que PetitBot ?</h2>
+                <p>PetitBot est un robot éducatif programmable conçu pour initier à la robotique et à la programmation. Il combine hardware et software pour offrir une expérience d'apprentissage interactive et ludique.</p>
             </div>
-            <div class="panel-content">
-                <div id="program-container"></div>
+            
+            <div class="presentation-section">
+                <h2>Caractéristiques principales</h2>
+                <ul>
+                    <li>Programmation intuitive par blocs</li>
+                    <li>Contrôle via WiFi</li>
+                    <li>Capteurs intégrés (distance, analogique)</li>
+                    <li>Interface web responsive</li>
+                    <li>Compatibilité multi-plateformes</li>
+                </ul>
+            </div>
+
+            <div class="presentation-section">
+                <h2>Comment commencer ?</h2>
+                <ol>
+                    <li>Connectez-vous au réseau WiFi du PetitBot</li>
+                    <li>Accédez à l'interface web</li>
+                    <li>Choisissez votre mode de programmation préféré</li>
+                    <li>Commencez à programmer !</li>
+                </ol>
             </div>
         </div>
     </div>
+
+    <div class="tab-content" id="remote-content" style="display: none;">
+        <div class="remote-container">
+            <h1>Télécommande PetitBot</h1>
+            <div class="remote-controls">
+                <div class="control-row">
+                    <button class="control-btn" id="forward">⬆️ Avancer</button>
+                </div>
+                <div class="control-row">
+                    <button class="control-btn" id="left">⬅️ Gauche</button>
+                    <button class="control-btn" id="stop">⏹️ Stop</button>
+                    <button class="control-btn" id="right">➡️ Droite</button>
+                </div>
+                <div class="control-row">
+                    <button class="control-btn" id="backward">⬇️ Reculer</button>
+                </div>
+            </div>
+            <div class="sensor-display">
+                <div class="sensor-value">
+                    <span>Distance : </span>
+                    <span id="distance-value">-- cm</span>
+                </div>
+                <div class="sensor-value">
+                    <span>Capteur analogique : </span>
+                    <span id="analog-value">--</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-content" id="blockly-content" style="display: none;">
+        <div class="main-container">
+            <!-- Conteneur de gauche -->
+            <div class="vertical-container left-panel">
+                <div class="panel-header" data-i18n="ui.availableBlocks">Blocs disponibles</div>
+                <div class="panel-content">
+                    <!-- Catégories de blocs -->
+                    <div class="category-section">
+                        <div class="category-header" data-category="MOVEMENT">
+                            <span class="category-icon">⬆️</span>
+                            <span class="category-title" data-i18n="categories.movement">Déplacements</span>
+                        </div>
+                        <div class="category-blocks" id="MOVEMENT-blocks"></div>
+                    </div>
+                    <div class="category-section">
+                        <div class="category-header" data-category="CONTROL">
+                            <span class="category-icon">🔄</span>
+                            <span class="category-title" data-i18n="categories.control">Contrôles</span>
+                        </div>
+                        <div class="category-blocks" id="CONTROL-blocks"></div>
+                    </div>
+                    <div class="category-section">
+                        <div class="category-header" data-category="SENSOR">
+                            <span class="category-icon">📏</span>
+                            <span class="category-title" data-i18n="categories.sensor">Capteurs</span>
+                        </div>
+                        <div class="category-blocks" id="SENSOR-blocks"></div>
+                    </div>
+                    <div class="category-section">
+                        <div class="category-header" data-category="SERVOS">
+                            <span class="category-icon">🔧</span>
+                            <span class="category-title" data-i18n="categories.servos">Servomoteurs</span>
+                        </div>
+                        <div class="category-blocks" id="SERVOS-blocks"></div>
+                    </div>
+                    <div class="category-section">
+                        <div class="category-header" data-category="LEDS">
+                            <span class="category-icon">💡</span>
+                            <span class="category-title" data-i18n="categories.leds">LEDs</span>
+                        </div>
+                        <div class="category-blocks" id="LEDS-blocks"></div>
+                    </div>
+                    <div class="category-section">
+                        <div class="category-header" data-category="TIME">
+                            <span class="category-icon">⏱️</span>
+                            <span class="category-title" data-i18n="categories.time">Temps</span>
+                        </div>
+                        <div class="category-blocks" id="TIME-blocks"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conteneur de droite -->
+            <div class="vertical-container right-panel">
+                <div class="panel-header">
+                    <span data-i18n="ui.program">Programme</span>
+                    <div class="button-group">
+                        <!-- Sélecteur de langue -->
+                        <div class="language-selector">
+                            <select id="language-select" class="language-select">
+                                <option value="fr">🇫🇷 Français</option>
+                                <option value="en">🇬🇧 English</option>
+                                <option value="es">🇪🇸 Español</option>
+                                <option value="de">🇩🇪 Deutsch</option>
+                            </select>
+                        </div>
+                        <button id="btn-execute" class="action-button" data-i18n="ui.execute">Exécuter</button>
+                        <button id="btn-clear" class="action-button" data-i18n="ui.clear">Effacer</button>
+                        <button id="btn-toggle-icons" class="action-button icon-mode-button" title="Mode icônes" data-i18n="ui.iconMode">
+                            <span class="mode-icon">🎨</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div id="program-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-content" id="wifi-content" style="display: none;">
+        <div class="wifi-container">
+            <h1>Configuration WiFi</h1>
+            
+            <div class="wifi-mode-toggle">
+                <span class="mode-label">Mode Station</span>
+                <label class="switch">
+                    <input type="checkbox" id="wifi-mode-toggle" checked>
+                    <span class="slider round"></span>
+                </label>
+                <span class="mode-label">Mode AP</span>
+            </div>
+
+            <div id="ap-config" class="wifi-section">
+                <h2>Configuration du Point d'Accès</h2>
+                <form id="ap-form" class="wifi-form">
+                    <div class="form-group">
+                        <label for="ap-ssid">Nom du réseau (SSID) :</label>
+                        <input type="text" id="ap-ssid" name="ap-ssid" placeholder="PetitBot_XXXX" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="ap-password">Mot de passe (min. 8 caractères) :</label>
+                        <input type="password" id="ap-password" name="ap-password" minlength="8" placeholder="petitbot" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="ap-channel">Canal WiFi :</label>
+                        <select id="ap-channel" name="ap-channel" required>
+                            <option value="1">1 (2.412 GHz)</option>
+                            <option value="6" selected>6 (2.437 GHz)</option>
+                            <option value="11">11 (2.462 GHz)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="wifi-submit">Appliquer la configuration AP</button>
+                </form>
+            </div>
+
+            <div id="station-config" class="wifi-section" style="display: none;">
+                <h2>Connexion à un réseau existant</h2>
+                <form id="station-form" class="wifi-form">
+                    <div class="form-group">
+                        <label for="station-ssid">Nom du réseau (SSID) :</label>
+                        <input type="text" id="station-ssid" name="station-ssid" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="station-password">Mot de passe :</label>
+                        <input type="password" id="station-password" name="station-password" required>
+                    </div>
+                    <div class="network-config">
+                        <h3>Configuration IP</h3>
+                        <div class="form-group">
+                            <label for="static-ip">Adresse IP fixe :</label>
+                            <input type="text" id="static-ip" name="static-ip" placeholder="192.168.1.100" pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="gateway">Passerelle :</label>
+                            <input type="text" id="gateway" name="gateway" placeholder="192.168.1.1" pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="subnet">Masque de sous-réseau :</label>
+                            <input type="text" id="subnet" name="subnet" placeholder="255.255.255.0" pattern="^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="wifi-submit">Se connecter au réseau</button>
+                </form>
+            </div>
+
+            <div class="wifi-status">
+                <h2>État de la connexion</h2>
+                <div class="status-info">
+                    <p>Mode actuel : <span id="current-mode">Point d'Accès</span></p>
+                    <p>État : <span id="connection-status">Connecté</span></p>
+                    <p>Adresse IP : <span id="current-ip">192.168.4.1</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-content" id="docs-content" style="display: none;">
+        <div class="documentation">
+            <h1>Documentation PetitBot</h1>
+            
+            <section class="doc-section">
+                <h2>I. Maîtriser le PetitBot</h2>
+                <h3>Matériel nécessaire</h3>
+                <ul>
+                    <li>1 PetitBot version basique</li>
+                    <li>5 ordinateurs / téléphones / tablettes</li>
+                    <li>5 « pilotes » pour la collaboration</li>
+                    <li>5 fiches actions (Avance / Recule / Gauche / Droite / Stop)</li>
+                </ul>
+            </section>
+
+            <section class="doc-section">
+                <h2>II. Commandes de base</h2>
+                <div class="command-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Action</th>
+                                <th>Commande HTTP</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Avancer</td>
+                                <td>http://192.168.4.1/avance</td>
+                            </tr>
+                            <tr>
+                                <td>Reculer</td>
+                                <td>http://192.168.4.1/recule</td>
+                            </tr>
+                            <tr>
+                                <td>Gauche</td>
+                                <td>http://192.168.4.1/gauche</td>
+                            </tr>
+                            <tr>
+                                <td>Droite</td>
+                                <td>http://192.168.4.1/droite</td>
+                            </tr>
+                            <tr>
+                                <td>Stop</td>
+                                <td>http://192.168.4.1/stop</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="doc-section">
+                <h2>III. Capteurs</h2>
+                <h3>Capteur de distance</h3>
+                <p>Connecté sur D0 ou D5 : http://192.168.4.1/distance</p>
+                
+                <h3>Capteur analogique</h3>
+                <p>Connecté sur A0 : http://192.168.4.1/analog</p>
+            </section>
+
+            <section class="doc-section">
+                <h2>IV. Programmation avancée</h2>
+                <p>Pour une programmation plus avancée, vous pouvez utiliser :</p>
+                <ul>
+                    <li>L'interface de programmation par blocs</li>
+                    <li>SNAP! pour des projets plus complexes</li>
+                    <li>App Inventor pour créer votre propre application</li>
+                </ul>
+            </section>
+        </div>
+    </div>
+
+    <script src="translations.js"></script>
     <script src="script.js"></script>
 </body>
 </html> 

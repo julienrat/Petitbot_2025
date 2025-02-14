@@ -76,6 +76,40 @@ Pour chaque bloc, une icône est définie pour le mode sans texte :
 }
 ```
 
+### Liste des Icônes par Catégorie
+
+#### Mouvements
+- ⬆️ Avancer
+- 🔼 Avancer de X pas
+- ⬇️ Reculer
+- 🔽 Reculer de X pas
+- ↪️ Tourner à gauche
+- ↩️ Tourner à droite
+
+#### Contrôles
+- 🔄 Répéter X fois
+- 📏 Si la distance
+
+#### Capteurs
+- 📐 Mesurer distance
+- 📊 Lire capteur analogique
+
+#### Servomoteurs
+- 🎮 Servo 1
+- 🎯 Servo 2
+- 🎲 Servo 3
+- 👈 Servo Gauche
+- 👉 Servo Droit
+
+#### LEDs
+- 💡 Allumer LED 1
+- ⚫ Éteindre LED 1
+- 🔆 Allumer LED 2
+- ⭕ Éteindre LED 2
+
+#### Temps
+- ⏱️ Attendre X secondes
+
 ## 🤖 Commandes du PetitBot
 
 Les commandes sont envoyées via des requêtes HTTP à l'adresse `http://192.168.4.1/`. Exemples :
