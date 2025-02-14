@@ -9,6 +9,7 @@ Cette interface permet de programmer visuellement le PetitBot en utilisant des b
 - Blocs de contrôle avec imbrication
 - Sauvegarde automatique des préférences
 - Communication directe avec le PetitBot
+- Support multilingue (Français, Anglais, Espagnol, Allemand)
 
 ## 🔧 Structure des Blocs
 
@@ -163,4 +164,73 @@ BLOCKS.NOUVELLE_CATEGORIE = {
 - Les erreurs de communication sont affichées dans la console
 - Le programme s'arrête automatiquement en cas d'erreur
 - La commande `stop` est envoyée après chaque mouvement
-- Les blocs invalides sont ignorés lors de l'exécution 
+- Les blocs invalides sont ignorés lors de l'exécution
+
+## 🌍 Système de Traduction
+
+L'interface supporte plusieurs langues grâce à un système de traduction intégré.
+
+### Structure des Traductions
+
+Les traductions sont organisées dans `translations.js` avec la structure suivante :
+```javascript
+{
+    fr: {                          // Code de la langue
+        categories: {              // Traductions des catégories
+            movement: 'Déplacements',
+            // ...
+        },
+        blocks: {                  // Traductions des blocs
+            forward: 'Avancer',
+            'forward-steps': 'Avancer de',
+            // ...
+        },
+        ui: {                      // Traductions de l'interface
+            execute: 'Exécuter',
+            steps: 'pas',
+            times: 'fois',
+            // ...
+        }
+    }
+}
+```
+
+### Ajouter une Nouvelle Langue
+
+1. Ajouter la langue dans `translations.js` :
+```javascript
+const translations = {
+    nouvelle_langue: {
+        categories: {
+            // Traductions des catégories
+        },
+        blocks: {
+            // Traductions des blocs
+        },
+        ui: {
+            // Traductions de l'interface
+        }
+    }
+}
+```
+
+2. Ajouter l'option dans le sélecteur de langue (`index.html`) :
+```html
+<select id="language-select" class="language-select">
+    <option value="nouvelle_langue">🏳️ Nouvelle Langue</option>
+</select>
+```
+
+### Utilisation des Traductions
+
+- Les éléments de l'interface utilisent l'attribut `data-i18n` :
+```html
+<span data-i18n="ui.execute">Exécuter</span>
+```
+
+- Les suffixes des blocs sont traduits via la section `ui` :
+```javascript
+{
+    suffix: 'pas'  // Traduit en utilisant ui.pas
+}
+``` 

@@ -170,9 +170,11 @@ let programBlocks = [];
 let draggedBlock = null;
 let insertIndicator = null;
 let isFromPalette = false;
+let currentLanguage = localStorage.getItem('language') || 'fr';
 
 // Initialisation
 document.addEventListener('DOMContentLoaded', () => {
+    initializeLanguage();
     initializeCategories();
     initializeBlocks();
     initializeDragAndDrop();
@@ -189,6 +191,112 @@ document.addEventListener('DOMContentLoaded', () => {
         blocksContainer.classList.add('icons-mode');
     }
 });
+
+// Initialisation de la langue
+function initializeLanguage() {
+    const languageSelect = document.getElementById('language-select');
+    languageSelect.value = currentLanguage;
+    
+    // Appliquer les traductions initiales
+    updateTranslations();
+    
+    // Écouter les changements de langue
+    languageSelect.addEventListener('change', (e) => {
+        currentLanguage = e.target.value;
+        localStorage.setItem('language', currentLanguage);
+        updateTranslations();
+    });
+}
+
+// Mettre à jour les traductions
+function updateTranslations() {
+    // Mettre à jour les éléments de l'interface
+    const elements = document.querySelectorAll('[data-i18n]');
+    elements.forEach(element => {
+        const key = element.getAttribute('data-i18n');
+        const keys = key.split('.');
+        let translation = translations[currentLanguage];
+        for (const k of keys) {
+            translation = translation[k];
+        }
+        if (translation) {
+            if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                element.placeholder = translation;
+            } else {
+                element.textContent = translation;
+            }
+        }
+    });
+
+    // Mettre à jour le message du conteneur de programme vide
+    const style = document.createElement('style');
+    style.textContent = `
+        #program-container:empty::before {
+            content: '${translations[currentLanguage].ui.dropBlocksHere}';
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Mettre à jour les blocs dans la palette
+    Object.entries(BLOCKS).forEach(([categoryId, categoryData]) => {
+        const container = document.getElementById(`${categoryId}-blocks`);
+        if (!container) return;
+
+        const blocks = container.querySelectorAll('.block');
+        blocks.forEach(block => {
+            const blockType = block.dataset.blockType;
+            const nameSpan = block.querySelector('.block-content span:first-child');
+            if (nameSpan) {
+                nameSpan.textContent = getTranslation(`blocks.${blockType}`);
+            }
+
+            // Mettre à jour les suffixes des paramètres
+            const inputs = block.querySelectorAll('input');
+            inputs.forEach(input => {
+                const nextSibling = input.nextSibling;
+                if (nextSibling && nextSibling.nodeType === Node.TEXT_NODE) {
+                    const suffix = input.getAttribute('data-suffix');
+                    if (suffix) {
+                        nextSibling.textContent = ' ' + getTranslation(`ui.${suffix}`);
+                    }
+                }
+            });
+        });
+    });
+
+    // Mettre à jour les blocs dans l'espace de travail
+    const workspace = document.getElementById('program-container');
+    const workspaceBlocks = workspace.querySelectorAll('.block');
+    workspaceBlocks.forEach(block => {
+        const blockType = block.dataset.blockType;
+        const nameSpan = block.querySelector('.block-content span:first-child');
+        if (nameSpan) {
+            nameSpan.textContent = getTranslation(`blocks.${blockType}`);
+        }
+        
+        // Mettre à jour les suffixes des paramètres
+        const inputs = block.querySelectorAll('input');
+        inputs.forEach(input => {
+            const nextSibling = input.nextSibling;
+            if (nextSibling && nextSibling.nodeType === Node.TEXT_NODE) {
+                const suffix = input.getAttribute('data-suffix');
+                if (suffix) {
+                    nextSibling.textContent = ' ' + getTranslation(`ui.${suffix}`);
+                }
+            }
+        });
+    });
+}
+
+// Fonction pour obtenir une traduction
+function getTranslation(key) {
+    const keys = key.split('.');
+    let translation = translations[currentLanguage];
+    for (const k of keys) {
+        translation = translation[k];
+    }
+    return translation || key;
+}
 
 // Initialisation des catégories
 function initializeCategories() {
@@ -253,7 +361,7 @@ function createBlockElement(block) {
     
     // Ajout du nom
     const nameSpan = document.createElement('span');
-    nameSpan.textContent = block.name;
+    nameSpan.textContent = getTranslation(`blocks.${block.id}`);
     content.appendChild(nameSpan);
     
     // Ajout des paramètres si nécessaire
@@ -279,11 +387,14 @@ function createBlockElement(block) {
                 input.className = 'block-input';
                 input.value = param.default || '';
                 input.placeholder = param.name;
+                if (param.suffix) {
+                    input.setAttribute('data-suffix', param.suffix);
+                }
                 content.appendChild(input);
             }
             
             if (param.suffix) {
-                content.appendChild(document.createTextNode(' ' + param.suffix));
+                content.appendChild(document.createTextNode(' ' + getTranslation(param.suffix)));
             }
         });
     }
@@ -331,6 +442,7 @@ function createInsertIndicator() {
 // Initialisation du drag and drop
 function initializeDragAndDrop() {
     const workspace = document.getElementById('program-container');
+    const leftPanel = document.querySelector('.left-panel');
     
     document.addEventListener('dragstart', (e) => {
         if (e.target.classList.contains('block')) {
@@ -346,6 +458,28 @@ function initializeDragAndDrop() {
         if (e.target.classList.contains('block')) {
             e.target.classList.remove('dragging');
             hideInsertIndicator();
+        }
+    });
+
+    // Ajout du gestionnaire pour la zone des blocs disponibles
+    leftPanel.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        if (draggedBlock && draggedBlock.classList.contains('in-workspace')) {
+            e.dataTransfer.dropEffect = 'move';
+        }
+    });
+
+    leftPanel.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+    });
+
+    leftPanel.addEventListener('drop', (e) => {
+        e.preventDefault();
+        leftPanel.classList.remove('drag-over');
+        
+        if (draggedBlock && draggedBlock.classList.contains('in-workspace')) {
+            draggedBlock.remove();
+            updateProgramBlocks();
         }
     });
 
@@ -396,7 +530,6 @@ function initializeDragAndDrop() {
             if (isFromPalette) {
                 blockToInsert = cloneBlockWithEvents(draggedBlock);
                 blockToInsert.classList.add('in-workspace');
-                addDeleteButton(blockToInsert);
             } else {
                 blockToInsert = draggedBlock;
             }
@@ -453,18 +586,6 @@ function hideInsertIndicator() {
     }
 }
 
-// Ajouter un bouton de suppression à un bloc
-function addDeleteButton(block) {
-    const deleteBtn = document.createElement('button');
-    deleteBtn.innerHTML = '×';
-    deleteBtn.className = 'delete-block';
-    deleteBtn.addEventListener('click', () => {
-        block.remove();
-        updateProgramBlocks();
-    });
-    block.appendChild(deleteBtn);
-}
-
 // Initialiser le drag and drop pour un container
 function initializeContainerDragDrop(container) {
     container.addEventListener('dragover', (e) => {
@@ -492,7 +613,6 @@ function initializeContainerDragDrop(container) {
             if (isFromPalette) {
                 blockToInsert = cloneBlockWithEvents(draggedBlock);
                 blockToInsert.classList.add('in-workspace');
-                addDeleteButton(blockToInsert);
             } else {
                 blockToInsert = draggedBlock;
             }
@@ -570,11 +690,27 @@ async function executeProgram() {
     updateProgramBlocks();
     console.log('Programme à exécuter:', programBlocks);
     
+    // Désactiver le bouton d'exécution pendant l'exécution
+    const executeBtn = document.getElementById('btn-execute');
+    executeBtn.disabled = true;
+    
     // URL de base du PetitBot
     const BASE_URL = 'http://192.168.4.1';
+    let isDemo = true; // Mode démo par défaut
     
     // Fonction pour exécuter une commande
     async function executeCommand(command) {
+        if (isDemo) {
+            // En mode démo, on simule juste un délai
+            console.log('Mode démo - Commande:', command);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Simuler une valeur de retour pour les capteurs
+            if (command === 'distance') return '20';
+            if (command === 'analog') return '512';
+            return 'OK';
+        }
+
         try {
             const response = await fetch(`${BASE_URL}/${command}`);
             if (!response.ok) {
@@ -586,101 +722,141 @@ async function executeProgram() {
             throw error;
         }
     }
+
+    // Fonction pour mettre en évidence un bloc
+    async function highlightBlock(block) {
+        block.classList.add('executing');
+        // Attendre un court instant pour que l'animation soit visible
+        await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+
+    // Fonction pour retirer la mise en évidence
+    function unhighlightBlock(block) {
+        block.classList.remove('executing');
+    }
     
     // Fonction récursive pour exécuter les blocs
-    async function executeBlock(block) {
-        switch (block.type) {
-            case 'forward':
-                await executeCommand('avance');
-                break;
-            case 'forward-steps':
-                await executeCommand(`avance?vitesse=${block.params.steps}`);
-                break;
-            case 'backward':
-                await executeCommand('recule');
-                break;
-            case 'backward-steps':
-                await executeCommand(`recule?vitesse=${block.params.steps}`);
-                break;
-            case 'turn-left':
-                await executeCommand('gauche');
-                break;
-            case 'turn-right':
-                await executeCommand('droite');
-                break;
-            case 'servo1':
-                await executeCommand(`servo1?angle=${block.params.angle}`);
-                break;
-            case 'servo2':
-                await executeCommand(`servo2?angle=${block.params.angle}`);
-                break;
-            case 'servo3':
-                await executeCommand(`servo3?angle=${block.params.angle}`);
-                break;
-            case 'servoG':
-                await executeCommand(`servoG?angle=${block.params.angle}`);
-                break;
-            case 'servoD':
-                await executeCommand(`servoD?angle=${block.params.angle}`);
-                break;
-            case 'led1-on':
-                await executeCommand('led1_on');
-                break;
-            case 'led1-off':
-                await executeCommand('led1_off');
-                break;
-            case 'led2-on':
-                await executeCommand('led2_on');
-                break;
-            case 'led2-off':
-                await executeCommand('led2_off');
-                break;
-            case 'measure-distance':
-                const distance = await executeCommand('distance');
-                return parseFloat(distance);
-            case 'read-analog':
-                const analog = await executeCommand('analog');
-                return parseFloat(analog);
-            case 'wait':
-                await new Promise(resolve => setTimeout(resolve, block.params.duration * 1000));
-                break;
-            case 'repeat':
-                const times = parseInt(block.params.times);
-                for (let i = 0; i < times; i++) {
-                    for (const childBlock of block.children) {
-                        await executeBlock(childBlock);
-                    }
-                }
-                break;
-            case 'if-distance':
-                const currentDistance = await executeCommand('distance');
-                const value = parseFloat(block.params.value);
-                const operator = block.params.operator;
-                
-                let condition = false;
-                switch (operator) {
-                    case '>':
-                        condition = currentDistance > value;
-                        break;
-                    case '<':
-                        condition = currentDistance < value;
-                        break;
-                    case '=':
-                        condition = Math.abs(currentDistance - value) < 1;
-                        break;
-                }
-                
-                if (condition && block.children) {
-                    for (const childBlock of block.children) {
-                        await executeBlock(childBlock);
-                    }
-                }
-                break;
+    async function executeBlock(block, parentContainer = null, blockIndex = 0) {
+        // Trouver l'élément DOM correspondant au bloc
+        let blockElement;
+        if (parentContainer) {
+            // Si on est dans un conteneur (bloc de contrôle), chercher dans ce conteneur
+            const blocks = Array.from(parentContainer.querySelectorAll(`:scope > .block[data-block-type="${block.type}"]`));
+            blockElement = blocks[blockIndex];
+        } else {
+            // Sinon, chercher dans le workspace principal
+            const workspace = document.getElementById('program-container');
+            const blocks = Array.from(workspace.querySelectorAll(`:scope > .block[data-block-type="${block.type}"]`));
+            const sameTypeBlocks = programBlocks.filter(b => b.type === block.type);
+            const indexInType = sameTypeBlocks.indexOf(block);
+            blockElement = blocks[indexInType];
         }
-        
-        // Arrêt après chaque action de mouvement
-        if (['forward', 'forward-steps', 'backward', 'backward-steps', 'turn-left', 'turn-right'].includes(block.type)) {
-            await executeCommand('stop');
+
+        if (blockElement) {
+            await highlightBlock(blockElement);
+        }
+
+        try {
+            switch (block.type) {
+                case 'forward':
+                    await executeCommand('avance');
+                    break;
+                case 'forward-steps':
+                    await executeCommand(`avance?vitesse=${block.params.steps}`);
+                    break;
+                case 'backward':
+                    await executeCommand('recule');
+                    break;
+                case 'backward-steps':
+                    await executeCommand(`recule?vitesse=${block.params.steps}`);
+                    break;
+                case 'turn-left':
+                    await executeCommand('gauche');
+                    break;
+                case 'turn-right':
+                    await executeCommand('droite');
+                    break;
+                case 'servo1':
+                    await executeCommand(`servo1?angle=${block.params.angle}`);
+                    break;
+                case 'servo2':
+                    await executeCommand(`servo2?angle=${block.params.angle}`);
+                    break;
+                case 'servo3':
+                    await executeCommand(`servo3?angle=${block.params.angle}`);
+                    break;
+                case 'servoG':
+                    await executeCommand(`servoG?angle=${block.params.angle}`);
+                    break;
+                case 'servoD':
+                    await executeCommand(`servoD?angle=${block.params.angle}`);
+                    break;
+                case 'led1-on':
+                    await executeCommand('led1_on');
+                    break;
+                case 'led1-off':
+                    await executeCommand('led1_off');
+                    break;
+                case 'led2-on':
+                    await executeCommand('led2_on');
+                    break;
+                case 'led2-off':
+                    await executeCommand('led2_off');
+                    break;
+                case 'measure-distance':
+                    const distance = await executeCommand('distance');
+                    return parseFloat(distance);
+                case 'read-analog':
+                    const analog = await executeCommand('analog');
+                    return parseFloat(analog);
+                case 'wait':
+                    await new Promise(resolve => setTimeout(resolve, block.params.duration * 1000));
+                    break;
+                case 'repeat':
+                    const times = parseInt(block.params.times);
+                    const container = blockElement ? blockElement.querySelector('.block-control-container') : null;
+                    for (let i = 0; i < times; i++) {
+                        for (let j = 0; j < block.children.length; j++) {
+                            await executeBlock(block.children[j], container, j);
+                        }
+                    }
+                    break;
+                case 'if-distance':
+                    const currentDistance = await executeCommand('distance');
+                    const value = parseFloat(block.params.value);
+                    const operator = block.params.operator;
+                    
+                    let condition = false;
+                    switch (operator) {
+                        case '>':
+                            condition = currentDistance > value;
+                            break;
+                        case '<':
+                            condition = currentDistance < value;
+                            break;
+                        case '=':
+                            condition = Math.abs(currentDistance - value) < 1;
+                            break;
+                    }
+                    
+                    if (condition && block.children) {
+                        const container = blockElement ? blockElement.querySelector('.block-control-container') : null;
+                        for (let j = 0; j < block.children.length; j++) {
+                            await executeBlock(block.children[j], container, j);
+                        }
+                    }
+                    break;
+            }
+            
+            // Arrêt après chaque action de mouvement
+            if (['forward', 'forward-steps', 'backward', 'backward-steps', 'turn-left', 'turn-right'].includes(block.type)) {
+                await executeCommand('stop');
+            }
+        } finally {
+            if (blockElement) {
+                unhighlightBlock(blockElement);
+                await new Promise(resolve => setTimeout(resolve, 200)); // Petite pause entre les blocs
+            }
         }
     }
     
@@ -693,6 +869,9 @@ async function executeProgram() {
         console.error('Erreur lors de l\'exécution du programme:', error);
         // Arrêter le robot en cas d'erreur
         await executeCommand('stop');
+    } finally {
+        // Réactiver le bouton d'exécution
+        executeBtn.disabled = false;
     }
 }
 
